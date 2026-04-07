@@ -209,4 +209,18 @@ def health():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    import webbrowser
+    import threading
+    
+    def open_browser():
+        webbrowser.open('http://127.0.0.1:8080')
+    
+    # Open browser after 1.5 seconds
+    threading.Timer(1.5, open_browser).start()
+    
+    print("\n" + "="*50)
+    print("SERVEUR DEMARRE!")
+    print("Ouvrez votre navigateur: http://127.0.0.1:8080")
+    print("="*50 + "\n")
+    
+    app.run(debug=False, host='127.0.0.1', port=8080)
