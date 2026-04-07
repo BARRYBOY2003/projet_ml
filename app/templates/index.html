@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Retail - Prediction Client</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 40px;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+        }
+        .result-card {
+            display: none;
+        }
+        .risk-low { color: #28a745; }
+        .risk-moderate { color: #ffc107; }
+        .risk-high { color: #fd7e14; }
+        .risk-critical { color: #dc3545; }
+        .cluster-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 50px;
+            color: white;
+            font-weight: bold;
+        }
+        .cluster-0 { background-color: #6c757d; }
+        .cluster-1 { background-color: #17a2b8; }
+        .cluster-2 { background-color: #28a745; }
+        .cluster-3 { background-color: #ffc107; color: #333; }
+        .form-label {
+            font-weight: 500;
+        }
+        .loading {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <div class="container text-center">
+            <h1>ML Retail - Analyse Comportementale Client</h1>
+            <p class="lead">Prediction du Churn et Segmentation Client</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Caracteristiques du Client</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="predictionForm">
+                            <div class="row">
+                                <!-- RFM Features -->
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Recency (jours)</label>
+                                    <input type="number" class="form-control" name="Recency" value="30" required>
+                                    <small class="text-muted">Jours depuis dernier achat</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Frequency</label>
+                                    <input type="number" class="form-control" name="Frequency" value="10" required>
+                                    <small class="text-muted">Nombre de commandes</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">MonetaryTotal (£)</label>
+                                    <input type="number" step="0.01" class="form-control" name="MonetaryTotal" value="1500" required>
+                                    <small class="text-muted">Depenses totales</small>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">MonetaryAvg (£)</label>
+                                    <input type="number" step="0.01" class="form-control" name="MonetaryAvg" value="150" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">TotalQuantity</label>
+                                    <input type="number" class="form-control" name="TotalQuantity" value="500" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">UniqueProducts</label>
+                                    <input type="number" class="form-control" name="UniqueProducts" value="50" required>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">CustomerTenureDays</label>
+                                    <input type="number" class="form-control" name="CustomerTenureDays" value="365" required>
+                                    <small class="text-muted">Anciennete en jours</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">ReturnRatio</label>
+                                    <input type="number" step="0.01" class="form-control" name="ReturnRatio" value="0.05" min="0" max="1" required>
+                                    <small class="text-muted">Taux de retour (0-1)</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">SatisfactionScore</label>
+                                    <input type="number" step="0.1" class="form-control" name="SatisfactionScore" value="4" min="1" max="5">
+                                    <small class="text-muted">Note (1-5)</small>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Age</label>
+                                    <input type="number" class="form-control" name="Age" value="35">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">SupportTicketsCount</label>
+                                    <input type="number" class="form-control" name="SupportTicketsCount" value="2">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">WeekendPurchaseRatio</label>
+                                    <input type="number" step="0.01" class="form-control" name="WeekendPurchaseRatio" value="0.2" min="0" max="1">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                <span class="normal-text">Predire</span>
+                                <span class="loading">
+                                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                                    Analyse en cours...
+                                </span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Resultats -->
+                <div class="card result-card" id="resultsCard">
+                    <div class="card-header">
+                        <h5 class="mb-0">Resultats de la Prediction</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Churn -->
+                        <div class="mb-4">
+                            <h6>Prediction du Churn</h6>
+                            <div id="churnResult">
+                                <p class="mb-2">
+                                    <strong>Probabilite de depart:</strong> 
+                                    <span id="churnProb" class="fs-4">-</span>%
+                                </p>
+                                <p>
+                                    <strong>Niveau de risque:</strong><br>
+                                    <span id="churnRisk" class="fs-5">-</span>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Cluster -->
+                        <div>
+                            <h6>Segmentation Client</h6>
+                            <div id="clusterResult">
+                                <p class="text-center mb-2">
+                                    <span id="clusterBadge" class="cluster-badge">-</span>
+                                </p>
+                                <p id="clusterDesc" class="text-muted text-center">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="card result-card" id="recoCard">
+                    <div class="card-header">
+                        <h5 class="mb-0">Recommandations</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul id="recommendations" class="list-group list-group-flush">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Documentation -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Documentation API</h5>
+            </div>
+            <div class="card-body">
+                <h6>Endpoint: POST /api/predict</h6>
+                <p>Envoyez un JSON avec les features du client pour obtenir les predictions.</p>
+                <pre class="bg-light p-3"><code>{
+    "Recency": 30,
+    "Frequency": 10,
+    "MonetaryTotal": 1500,
+    "MonetaryAvg": 150,
+    "TotalQuantity": 500,
+    ...
+}</code></pre>
+                <p><strong>Reponse:</strong></p>
+                <pre class="bg-light p-3"><code>{
+    "churn_prediction": 0,
+    "churn_probability": 15.5,
+    "churn_risk": "Faible risque - Client fidele",
+    "cluster": 2,
+    "cluster_description": "Clients Fideles - Engagement regulier"
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center py-4 mt-5 bg-light">
+        <p class="mb-0">Projet ML Retail - Module Machine Learning GI2 - 2025-2026</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Show loading
+            document.querySelector('.normal-text').style.display = 'none';
+            document.querySelector('.loading').style.display = 'inline';
+            
+            const formData = new FormData(this);
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                // Show results
+                document.querySelectorAll('.result-card').forEach(card => {
+                    card.style.display = 'block';
+                });
+                
+                // Update Churn
+                if (data.churn && !data.churn.error) {
+                    document.getElementById('churnProb').textContent = data.churn.probability;
+                    document.getElementById('churnRisk').textContent = data.churn.risk_level;
+                    
+                    // Color based on risk
+                    const riskEl = document.getElementById('churnRisk');
+                    riskEl.className = '';
+                    if (data.churn.probability < 20) {
+                        riskEl.classList.add('risk-low');
+                    } else if (data.churn.probability < 40) {
+                        riskEl.classList.add('risk-moderate');
+                    } else if (data.churn.probability < 60) {
+                        riskEl.classList.add('risk-high');
+                    } else {
+                        riskEl.classList.add('risk-critical');
+                    }
+                }
+                
+                // Update Cluster
+                if (data.cluster && !data.cluster.error) {
+                    const badge = document.getElementById('clusterBadge');
+                    badge.textContent = 'Cluster ' + data.cluster.id;
+                    badge.className = 'cluster-badge cluster-' + data.cluster.id;
+                    document.getElementById('clusterDesc').textContent = data.cluster.description;
+                }
+                
+                // Generate recommendations
+                generateRecommendations(data);
+                
+            } catch (error) {
+                alert('Erreur: ' + error.message);
+            } finally {
+                // Hide loading
+                document.querySelector('.normal-text').style.display = 'inline';
+                document.querySelector('.loading').style.display = 'none';
+            }
+        });
+        
+        function generateRecommendations(data) {
+            const recoList = document.getElementById('recommendations');
+            recoList.innerHTML = '';
+            
+            const recommendations = [];
+            
+            if (data.churn) {
+                if (data.churn.probability > 60) {
+                    recommendations.push('Action urgente: Contacter le client immediatement');
+                    recommendations.push('Offrir une remise personnalisee');
+                    recommendations.push('Proposer un programme de fidelite VIP');
+                } else if (data.churn.probability > 40) {
+                    recommendations.push('Envoyer une campagne de retention');
+                    recommendations.push('Proposer des avantages exclusifs');
+                } else if (data.churn.probability > 20) {
+                    recommendations.push('Maintenir le contact regulier');
+                    recommendations.push('Envoyer des offres personnalisees');
+                } else {
+                    recommendations.push('Client fidele - Maintenir la relation');
+                    recommendations.push('Programme de parrainage');
+                }
+            }
+            
+            if (data.cluster) {
+                switch(data.cluster.id) {
+                    case 0:
+                        recommendations.push('Campagne de reactivation');
+                        break;
+                    case 1:
+                        recommendations.push('Incentives pour augmenter les achats');
+                        break;
+                    case 2:
+                        recommendations.push('Recompenses de fidelite');
+                        break;
+                    case 3:
+                        recommendations.push('Acces VIP et avant-premieres');
+                        break;
+                }
+            }
+            
+            recommendations.forEach(reco => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.textContent = reco;
+                recoList.appendChild(li);
+            });
+        }
+    </script>
+</body>
+</html>

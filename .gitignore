@@ -1,0 +1,48 @@
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local configuration
+.env
+.env.local
+
+# Model files (large files)
+*.pkl
+*.joblib
+!models/.gitkeep
+
+# Data files (keep structure and raw data, exclude generated data)
+!data/raw/retail_customers_COMPLETE_CATEGORICAL.csv
+data/processed/*.csv
+data/train_test/*.csv
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/train_test/.gitkeep
