@@ -1,13 +1,8 @@
-"""
-predict.py - Script de prediction utilisant les modeles entraines
-"""
-
 import pandas as pd
 import numpy as np
 import sys
 import os
 
-# Ajouter le repertoire src au path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from utils import load_model, MODELS_DIR
@@ -16,9 +11,6 @@ warnings.filterwarnings('ignore')
 
 
 def load_all_models():
-    """
-    Charge tous les modeles sauvegardes
-    """
     models = {}
     
     try:
@@ -67,26 +59,12 @@ def load_all_models():
 
 
 def predict_churn(X, models):
-    """
-    Predit le churn pour de nouvelles donnees
-    
-    Args:
-        X: DataFrame ou array avec les features
-        models: Dictionnaire des modeles charges
-    
-    Returns:
-        predictions: Array des predictions (0 ou 1)
-        probabilities: Array des probabilites
-    """
     if 'classifier' not in models:
         raise ValueError("Classifier non charge")
     
     classifier = models['classifier']
-    
-    # Predictions
     predictions = classifier.predict(X)
     
-    # Probabilites
     try:
         probabilities = classifier.predict_proba(X)[:, 1]
     except:
@@ -96,49 +74,24 @@ def predict_churn(X, models):
 
 
 def predict_cluster(X, models):
-    """
-    Predit le cluster pour de nouvelles donnees
-    
-    Args:
-        X: DataFrame ou array avec les features
-        models: Dictionnaire des modeles charges
-    
-    Returns:
-        clusters: Array des clusters assignes
-    """
     if 'kmeans' not in models:
         raise ValueError("K-Means non charge")
     
     kmeans = models['kmeans']
     clusters = kmeans.predict(X)
-    
     return clusters
 
 
 def predict_monetary(X, models):
-    """
-    Predit les depenses (MonetaryAvg) pour de nouvelles donnees
-    
-    Args:
-        X: DataFrame ou array avec les features
-        models: Dictionnaire des modeles charges
-    
-    Returns:
-        predictions: Array des predictions
-    """
     if 'regressor' not in models:
         raise ValueError("Regressor non charge")
     
     regressor = models['regressor']
     predictions = regressor.predict(X)
-    
     return predictions
 
 
 def get_cluster_description(cluster_id):
-    """
-    Retourne une description business du cluster
-    """
     descriptions = {
         0: "Clients Dormants - Faible activite, necessite reactivation",
         1: "Clients Potentiels - Engagement modere, opportunite de developpement",
@@ -149,9 +102,6 @@ def get_cluster_description(cluster_id):
 
 
 def get_churn_risk_description(probability):
-    """
-    Retourne une description du risque de churn
-    """
     if probability < 0.2:
         return "Faible risque - Client fidele"
     elif probability < 0.4:
@@ -163,18 +113,6 @@ def get_churn_risk_description(probability):
 
 
 def predict_single_customer(customer_data, models, feature_names=None):
-    """
-    Fait toutes les predictions pour un seul client
-    
-    Args:
-        customer_data: dict ou Series avec les features du client
-        models: Dictionnaire des modeles
-        feature_names: Liste des noms de features attendus
-    
-    Returns:
-        dict avec toutes les predictions
-    """
-    # Convertir en DataFrame si necessaire
     if isinstance(customer_data, dict):
         df = pd.DataFrame([customer_data])
     elif isinstance(customer_data, pd.Series):
@@ -182,22 +120,16 @@ def predict_single_customer(customer_data, models, feature_names=None):
     else:
         df = customer_data
     
-    # S'assurer de l'ordre des features
     if feature_names and 'feature_names' in models:
         expected_features = models['feature_names']
-        # Ajouter les colonnes manquantes avec 0
         for feat in expected_features:
             if feat not in df.columns:
                 df[feat] = 0
         df = df[expected_features]
     
     X = df.values
+    results = {'customer_data': customer_data}
     
-    results = {
-        'customer_data': customer_data
-    }
-    
-    # Prediction Churn
     try:
         churn_pred, churn_prob = predict_churn(X, models)
         results['churn_prediction'] = int(churn_pred[0])
@@ -206,7 +138,6 @@ def predict_single_customer(customer_data, models, feature_names=None):
     except Exception as e:
         results['churn_error'] = str(e)
     
-    # Prediction Cluster
     try:
         cluster = predict_cluster(X, models)
         results['cluster'] = int(cluster[0])
@@ -214,7 +145,6 @@ def predict_single_customer(customer_data, models, feature_names=None):
     except Exception as e:
         results['cluster_error'] = str(e)
     
-    # Prediction Monetaire
     try:
         monetary = predict_monetary(X, models)
         results['predicted_monetary'] = float(monetary[0])
@@ -225,21 +155,9 @@ def predict_single_customer(customer_data, models, feature_names=None):
 
 
 def batch_predict(df, models):
-    """
-    Fait des predictions en batch pour un DataFrame
-    
-    Args:
-        df: DataFrame avec les features
-        models: Dictionnaire des modeles
-    
-    Returns:
-        DataFrame avec les predictions ajoutees
-    """
     results = df.copy()
-    
     X = df.values
     
-    # Predictions Churn
     try:
         churn_pred, churn_prob = predict_churn(X, models)
         results['Churn_Predicted'] = churn_pred
@@ -248,7 +166,6 @@ def batch_predict(df, models):
     except Exception as e:
         print(f"Erreur prediction churn: {e}")
     
-    # Predictions Cluster
     try:
         clusters = predict_cluster(X, models)
         results['Cluster'] = clusters
@@ -260,9 +177,6 @@ def batch_predict(df, models):
 
 
 def main():
-    """
-    Fonction principale pour tester les predictions
-    """
     print("\n" + "="*60)
     print("CHARGEMENT DES MODELES")
     print("="*60)
@@ -273,7 +187,6 @@ def main():
         print("\nAucun modele trouve. Executez d'abord train_model.py")
         return
     
-    # Test avec les donnees de test
     print("\n" + "="*60)
     print("TEST DES PREDICTIONS")
     print("="*60)
@@ -284,17 +197,14 @@ def main():
         
         print(f"\nTest sur {len(X_test)} echantillons...")
         
-        # Predictions batch
         results = batch_predict(X_test, models)
         
-        # Afficher quelques resultats
         print("\n--- Echantillon de predictions ---")
         display_cols = ['Churn_Predicted', 'Churn_Probability', 'Cluster']
         available_cols = [c for c in display_cols if c in results.columns]
         if available_cols:
             print(results[available_cols].head(10))
         
-        # Statistiques
         if 'Churn_Predicted' in results.columns:
             print("\n--- Distribution des predictions de churn ---")
             print(results['Churn_Predicted'].value_counts(normalize=True))
@@ -303,7 +213,6 @@ def main():
             print("\n--- Distribution des clusters ---")
             print(results['Cluster'].value_counts().sort_index())
         
-        # Test prediction unique
         print("\n--- Test prediction client unique ---")
         sample_customer = X_test.iloc[0]
         prediction = predict_single_customer(sample_customer, models)
